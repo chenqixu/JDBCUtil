@@ -24,16 +24,17 @@ public class CmdTool {
 
     public static void main(String[] args) throws Exception {
         //-t oracle -u bishow -p bishow -d jdbc:oracle:thin:@10.1.0.242:1521:ywxx
-//        args[0] = "-t";
-//        args[1] = "redis";
-//        args[2] = "-u";
-//        args[3] = "redis";
-//        args[4] = "-p";
-//        args[5] = "redis";
-//        args[6] = "-d";
-//        args[7] = "10.1.4.185:6380,10.1.4.185:6381,10.1.4.185:6382,10.1.4.185:6383,10.1.4.185:6384,10.1.4.185:6385";
-//        args[8] = "-l";
-//        args[9] = "debug";
+        //-t redis -u redis -p redis -d 192.168.230.128:6379 -l info
+        args[0] = "-t";
+        args[1] = "redis";
+        args[2] = "-u";
+        args[3] = "redis";
+        args[4] = "-p";
+        args[5] = "redis";
+        args[6] = "-d";
+        args[7] = "10.1.4.185:6380,10.1.4.185:6381,10.1.4.185:6382,10.1.4.185:6383,10.1.4.185:6384,10.1.4.185:6385";
+        args[8] = "-l";
+        args[9] = "debug";
         CmdTool.newbuilder().run(args);
     }
 

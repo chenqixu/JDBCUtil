@@ -28,6 +28,11 @@ public class JDBCUtil {
         loadDriver();
     }
 
+    public JDBCUtil(Connection conn) {
+        this();
+        this.conn = conn;
+    }
+
     public JDBCUtil(CmdBean cmdBean) {
         this();
         this.cmdBean = cmdBean;
@@ -316,5 +321,9 @@ public class JDBCUtil {
 
     protected void finalize() {
         closeAll();
+    }
+
+    public Connection getConn() {
+        return conn;
     }
 }
