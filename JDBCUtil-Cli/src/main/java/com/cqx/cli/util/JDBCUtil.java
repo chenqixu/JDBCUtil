@@ -53,7 +53,7 @@ public class JDBCUtil {
 
     public void checkConnection() throws SQLException {
         //如果连接不正常
-        CmdTool.println("conn：" + conn);
+        CmdTool.debug("conn：" + conn);
         //释放
 //        closeAll();
         //重连
@@ -69,12 +69,14 @@ public class JDBCUtil {
     public ResultSet executeQuery(String sql) throws SQLException {
         checkConnection();
         ResultSet rs;
-        try {
-            stm = conn.createStatement();
-            rs = stm.executeQuery(sql);
-        } finally {
-            closeStm();
-        }
+//        try {
+        stm = conn.createStatement();
+        rs = stm.executeQuery(sql);
+//        } finally {
+//            //如果在rs.next()之前关闭了Statement或PreparedStatement，会导致下面的异常
+//            //java.sql.SQLException: 关闭的语句: next
+//            closeStm();
+//        }
         if (rs == null) {
             return null;
         }
@@ -101,6 +103,36 @@ public class JDBCUtil {
     }
 
     /**
+     * 执行存储过程
+     *
+     * @param sql
+     * @throws SQLException
+     */
+    public void prepareCall(String sql) throws SQLException {
+        sql = "{" + sql + "}";
+        CallableStatement callStmt = null;
+        boolean result;
+        try {
+            callStmt = conn.prepareCall(sql);
+            result = callStmt.execute();
+        } finally {
+            closeCallableStatement(callStmt);
+        }
+        CmdTool.println("prepareCall：" + result);
+    }
+
+    /**
+     * 无参的预处理操作
+     *
+     * @param sql
+     * @return
+     * @throws SQLException
+     */
+    public long executeBatch(String sql) throws SQLException {
+        return executeBatch(sql, null);
+    }
+
+    /**
      * 通过掺入List参数来进行相关组件的操作
      *
      * @param sql
@@ -114,17 +146,18 @@ public class JDBCUtil {
             conn.setAutoCommit(false);// 关闭自动提交
             if (pstmt == null)
                 pstmt = conn.prepareStatement(sql);// 预编译SQL
-            for (List<String> param : params) {
-                int index = 1;
-                for (String p : param) {
-                    if (p == null || "".equals(p)) {
-                        pstmt.setObject(index++, null);
-                    } else {
-                        pstmt.setString(index++, p);
+            if (params != null)
+                for (List<String> param : params) {
+                    int index = 1;
+                    for (String p : param) {
+                        if (p == null || "".equals(p)) {
+                            pstmt.setObject(index++, null);
+                        } else {
+                            pstmt.setString(index++, p);
+                        }
                     }
+                    pstmt.addBatch();
                 }
-                pstmt.addBatch();
-            }
             int[] cnt = pstmt.executeBatch();
             conn.commit();
             count = arraySum(cnt);
@@ -151,35 +184,45 @@ public class JDBCUtil {
      * @throws SQLException
      */
     public void parserSql(String sql) throws Exception {
-        String newSql = sql.trim();
-        if (newSql.startsWith("desc") && cmdBean.getType().equals("oracle")) {
-            newSql = desc(cmdBean.getUsername(), newSql.replace("desc", "").trim());
-            printlnResultSet(executeQuery(newSql));
-        } else if (newSql.startsWith("export")) {
-            //去掉export
-            //使用" as "切割
-            String _sql = newSql.replace("export", "").trim();
-            String[] arr = _sql.split(" as ");
-            if (arr.length == 2) {
-                exportData(arr[0], arr[1]);
+        try {
+            String newSql = sql.trim();
+            if (newSql.startsWith("desc") && cmdBean.getType().equals("oracle")) {
+                newSql = desc(cmdBean.getUsername(), newSql.replace("desc", "").trim());
+                printlnResultSet(executeQuery(newSql));
+            } else if (newSql.startsWith("export")) {
+                //去掉export
+                //使用" as "切割
+                String _sql = newSql.replace("export", "").trim();
+                String[] arr = _sql.split(" as ");
+                if (arr.length == 2) {
+                    exportData(arr[0], arr[1]);
+                }
+            } else if (newSql.startsWith("import")) {
+                //去掉import
+                //使用" as "切割
+                String _sql = newSql.replace("import", "").trim();
+                String[] arr = _sql.split(" as ");
+                if (arr.length == 2) {
+                    importData(arr[0], arr[1]);
+                }
+            } else if (newSql.startsWith("select")) {
+                printlnResultSet(executeQuery(newSql));
+            } else if (newSql.startsWith("insert")) {
+                printlnUpdateResult(executeUpdate(newSql));
+            } else if (newSql.startsWith("begin")) {//执行存储过程
+                //前面删掉了结尾的;，这里需要补上
+                newSql = newSql + ";";
+                printlnUpdateResult(executeBatch(newSql));
+            } else if (newSql.startsWith("call")) {//执行存储过程
+                prepareCall(newSql);
+            } else {
+                String reason = "无法识别的语句，sql：" + newSql;
+                String SQLState = "err";
+                int vendorCode = -1;
+                throw new SQLException(reason, SQLState, vendorCode);
             }
-        } else if (newSql.startsWith("import")) {
-            //去掉import
-            //使用" as "切割
-            String _sql = newSql.replace("import", "").trim();
-            String[] arr = _sql.split(" as ");
-            if (arr.length == 2) {
-                importData(arr[0], arr[1]);
-            }
-        } else if (newSql.startsWith("select")) {
-            printlnResultSet(executeQuery(newSql));
-        } else if (newSql.startsWith("insert")) {
-            printlnUpdateResult(executeUpdate(newSql));
-        } else {
-            String reason = "无法识别的语句，sql：" + newSql;
-            String SQLState = "err";
-            int vendorCode = -1;
-            throw new SQLException(reason, SQLState, vendorCode);
+        } finally {
+            closeStm();
         }
     }
 
@@ -207,7 +250,7 @@ public class JDBCUtil {
         int fail = 0;
         for (String str : sqllist) {
             CmdTool.debug("sql语句：" + str);
-            int result = printlnUpdateResult(executeUpdate(str));
+            long result = printlnUpdateResult(executeUpdate(str));
             if (result == 0 || result == 1) count++;
             else fail++;
         }
@@ -225,7 +268,7 @@ public class JDBCUtil {
         return sb.toString();
     }
 
-    public int printlnUpdateResult(int result) {
+    public long printlnUpdateResult(long result) {
         CmdTool.println("执行结果：" + result);
         return result;
     }
@@ -241,15 +284,22 @@ public class JDBCUtil {
     public <T extends IResultSetDeal> int dealResultSet(ResultSet rs, int limit, T t) throws SQLException {
         int cnt = 0;
         if (rs != null) {
-            while (rs.next() && isLimit(cnt, limit)) {
-                for (int i = 0; i < rs.getMetaData().getColumnCount(); i++) {
-                    t.execValue(rs.getString(i + 1));
-                    if (i < (rs.getMetaData().getColumnCount() - 1))
-                        t.execValueSplit();
+            try {
+                while (rs.next() && isLimit(cnt, limit)) {
+                    for (int i = 0; i < rs.getMetaData().getColumnCount(); i++) {
+                        t.execValue(rs.getString(i + 1));
+                        if (i < (rs.getMetaData().getColumnCount() - 1))
+                            t.execValueSplit();
+                    }
+                    t.execValueEnd();
+                    cnt++;
                 }
-                t.execValueEnd();
-                cnt++;
+            } finally {
+                closeResultSet(rs);
             }
+        }
+        if (cnt == 0) {
+            CmdTool.println("no record.");
         }
         return cnt;
     }
@@ -266,7 +316,7 @@ public class JDBCUtil {
         if (conn != null)
             try {
                 conn.close();
-                CmdTool.println("close conn：" + conn);
+                CmdTool.debug("close conn：" + conn);
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -276,7 +326,7 @@ public class JDBCUtil {
         if (stm != null)
             try {
                 stm.close();
-                CmdTool.println("close stm：" + stm);
+                CmdTool.debug("close stm：" + stm);
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -286,10 +336,32 @@ public class JDBCUtil {
         if (pstmt != null)
             try {
                 pstmt.close();
-                CmdTool.println("close pstmt：" + pstmt);
+                CmdTool.debug("close pstmt：" + pstmt);
             } catch (SQLException e) {
                 e.printStackTrace();
             }
+    }
+
+    private void closeResultSet(ResultSet rs) {
+        if (rs != null) {
+            try {
+                rs.close();
+                CmdTool.debug("close ResultSet：" + rs);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void closeCallableStatement(CallableStatement callStmt) {
+        if (callStmt != null) {
+            try {
+                callStmt.close();
+                CmdTool.debug("close CallableStatement：" + callStmt);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public void closeAll() {
@@ -316,7 +388,7 @@ public class JDBCUtil {
         driverMap.put("mysql", "com.mysql.jdbc.Driver");
         driverMap.put("redis", "com.cqx.redis.jdbc.RedisDriver");
         driverMap.put("hive", "org.apache.hive.jdbc.HiveDriver");
-        driverMap.put("timesten", "TimestenJDBCTest");
+//        driverMap.put("timesten", "TimestenJDBCTest");
     }
 
     protected void finalize() {

@@ -23,19 +23,15 @@ public class CmdTool {
     }
 
     public static void main(String[] args) throws Exception {
-        //-t oracle -u bishow -p bishow -d jdbc:oracle:thin:@10.1.0.242:1521:ywxx
-        //-t redis -u redis -p redis -d 192.168.230.128:6379 -l info
-        args[0] = "-t";
-        args[1] = "redis";
-        args[2] = "-u";
-        args[3] = "redis";
-        args[4] = "-p";
-        args[5] = "redis";
-        args[6] = "-d";
-        args[7] = "10.1.4.185:6380,10.1.4.185:6381,10.1.4.185:6382,10.1.4.185:6383,10.1.4.185:6384,10.1.4.185:6385";
-        args[8] = "-l";
-        args[9] = "debug";
+//        args = setParam("-t oracle -u bishow -p C%MuhN#q$4 -d jdbc:oracle:thin:@10.1.0.242:1521:ywxx -l info");
+        args = setParam("-t oracle -u devload -p V%jjmZ#n$1 -d jdbc:oracle:thin:@10.1.0.242:1521:ywxx -l debug");
+//        args = setParam("-t redis -u redis -p redis -d 192.168.230.128:6379 -l info");
+//        args = setParam("-t redis -u redis -p redis -d 10.1.4.185:6380,10.1.4.185:6381,10.1.4.185:6382,10.1.4.185:6383,10.1.4.185:6384,10.1.4.185:6385 -l debug");
         CmdTool.newbuilder().run(args);
+    }
+
+    public static String[] setParam(String param) {
+        return param.split(" ", -1);
     }
 
     public static void print(String msg) {
@@ -70,6 +66,7 @@ public class CmdTool {
         print(type + ">");
         while (scanner.hasNextLine()) {
             String cmd = scanner.nextLine();
+            if (cmd.endsWith(";")) cmd = cmd.substring(0, cmd.length() - 1);
             if (cmd.trim().equalsIgnoreCase("exit")
                     || cmd.trim().equalsIgnoreCase("quit")) {
                 jdbcUtil.closeAll();
