@@ -23,9 +23,13 @@ public class JDBCUtil {
     protected Statement stm = null;
     protected PreparedStatement pstmt = null;
     protected CmdBean cmdBean = null;
+    protected SqlTypeUtil sqlTypeUtil = new SqlTypeUtil();
 
     public JDBCUtil() {
+        // loadDriver
         loadDriver();
+        // init SqlTypes
+        sqlTypeUtil.init();
     }
 
     public JDBCUtil(Connection conn) {
@@ -81,6 +85,26 @@ public class JDBCUtil {
             return null;
         }
         return rs;
+    }
+
+    public boolean descMetaData(ResultSet rs) throws SQLException {
+        int cnt = 0;
+        if (rs != null) {
+            try {
+                if (rs.next()) {
+                    for (int i = 0; i < rs.getMetaData().getColumnCount(); i++) {
+                        String columnName = rs.getMetaData().getColumnName(i + 1);
+                        int columnType = rs.getMetaData().getColumnType(i + 1);
+                        CmdTool.println("columnName：" + columnName + "，columnType：" + columnType +
+                                "，Type：" + sqlTypeUtil.getNameByteType(columnType));
+                        cnt++;
+                    }
+                }
+            } finally {
+                closeResultSet(rs);
+            }
+        }
+        return cnt > 0;
     }
 
     /**
@@ -187,8 +211,15 @@ public class JDBCUtil {
         try {
             String newSql = sql.trim();
             if (newSql.startsWith("desc") && cmdBean.getType().equals("oracle")) {
-                newSql = desc(cmdBean.getUsername(), newSql.replace("desc", "").trim());
-                printlnResultSet(executeQuery(newSql));
+                String tableName = newSql.replace("desc", "").trim();
+                newSql = desc(tableName);
+                CmdTool.debug("newSql：" + newSql);
+                boolean flag = descMetaData(executeQuery(newSql));
+                if (!flag) {
+                    newSql = desc(cmdBean.getUsername(), tableName);
+                    CmdTool.debug("newSql：" + newSql);
+                    printlnResultSet(executeQuery(newSql), 0);
+                }
             } else if (newSql.startsWith("export")) {
                 //去掉export
                 //使用" as "切割
@@ -268,13 +299,25 @@ public class JDBCUtil {
         return sb.toString();
     }
 
+    public String desc(String tablename) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("select * from ")
+                .append(tablename)
+                .append(" where rownum=1 ");
+        return sb.toString();
+    }
+
     public long printlnUpdateResult(long result) {
         CmdTool.println("执行结果：" + result);
         return result;
     }
 
+    public void printlnResultSet(ResultSet rs, int limit) throws SQLException {
+        dealResultSet(rs, limit, new PrintResultSetDeal());
+    }
+
     public void printlnResultSet(ResultSet rs) throws SQLException {
-        dealResultSet(rs, 5, new PrintResultSetDeal());
+        printlnResultSet(rs, 5);
     }
 
     public int writeResultSet(ResultSet rs, FileUtil fileUtil) throws SQLException {
@@ -287,7 +330,25 @@ public class JDBCUtil {
             try {
                 while (rs.next() && isLimit(cnt, limit)) {
                     for (int i = 0; i < rs.getMetaData().getColumnCount(); i++) {
-                        t.execValue(rs.getString(i + 1));
+                        int sqlDataType = rs.getMetaData().getColumnType(i + 1);
+                        switch (sqlDataType) {
+                            case Types.DATE:
+                                t.execValue(String.valueOf(rs.getDate(i + 1)));
+                                break;
+                            case Types.TIME:
+                                t.execValue(String.valueOf(rs.getTime(i + 1)));
+                                break;
+                            case Types.TIMESTAMP:
+                                t.execValue(String.valueOf(rs.getTimestamp(i + 1)));
+                                break;
+                            case Types.VARCHAR:
+                                t.execValue(rs.getString(i + 1));
+                            case Types.NUMERIC:
+                                t.execValue(String.valueOf(rs.getInt(i + 1)));
+                            default:
+                                t.execValue(rs.getString(i + 1));
+                                break;
+                        }
                         if (i < (rs.getMetaData().getColumnCount() - 1))
                             t.execValueSplit();
                     }

@@ -23,10 +23,12 @@ public class CmdTool {
     }
 
     public static void main(String[] args) throws Exception {
-//        args = setParam("-t oracle -u bishow -p C%MuhN#q$4 -d jdbc:oracle:thin:@10.1.0.242:1521:ywxx -l info");
-        args = setParam("-t oracle -u devload -p V%jjmZ#n$1 -d jdbc:oracle:thin:@10.1.0.242:1521:ywxx -l debug");
-//        args = setParam("-t redis -u redis -p redis -d 192.168.230.128:6379 -l info");
-//        args = setParam("-t redis -u redis -p redis -d 10.1.4.185:6380,10.1.4.185:6381,10.1.4.185:6382,10.1.4.185:6383,10.1.4.185:6384,10.1.4.185:6385 -l debug");
+        if (isWindow()) {
+            args = setParam("-t oracle -u bishow -p C%MuhN#q$4 -d jdbc:oracle:thin:@10.1.0.242:1521:ywxx -l info");
+//            args = setParam("-t oracle -u devload -p V%jjmZ#n$1 -d jdbc:oracle:thin:@10.1.0.242:1521:ywxx -l debug");
+//            args = setParam("-t redis -u redis -p redis -d 192.168.230.128:6379 -l info");
+//            args = setParam("-t redis -u redis -p redis -d 10.1.4.185:6380,10.1.4.185:6381,10.1.4.185:6382,10.1.4.185:6383,10.1.4.185:6384,10.1.4.185:6385 -l debug");
+        }
         CmdTool.newbuilder().run(args);
     }
 
@@ -45,6 +47,20 @@ public class CmdTool {
     public static void debug(String msg) {
         if (loglevel.equals("debug"))
             System.out.println(msg);
+    }
+
+    /**
+     * 是否是本地测试
+     *
+     * @return
+     */
+    public static boolean isWindow() {
+        String systemType = System.getProperty("os.name");
+        if (systemType.toUpperCase().startsWith("WINDOWS")) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
