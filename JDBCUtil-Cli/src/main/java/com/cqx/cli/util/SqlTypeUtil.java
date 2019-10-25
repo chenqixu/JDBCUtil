@@ -34,4 +34,8 @@ public class SqlTypeUtil {
     public String getNameByteType(int type) {
         return typeMap.get(type);
     }
+
+    public Map<Integer, String> getTypeMap() {
+        return typeMap;
+    }
 }

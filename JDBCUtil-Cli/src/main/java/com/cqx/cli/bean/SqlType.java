@@ -8,13 +8,23 @@ package com.cqx.cli.bean;
 public class SqlType {
     private String name;
     private int typeCode;
+    private Class<?> type;
 
     public SqlType() {
     }
 
     public SqlType(String name, int typeCode) {
+        this(name, typeCode, null);
+    }
+
+    public SqlType(String name, int typeCode, Class<?> type) {
         this.name = name;
         this.typeCode = typeCode;
+        this.type = type;
+    }
+
+    public String toString() {
+        return "name：" + this.name + "，typeCode：" + this.typeCode + "，type：" + this.type;
     }
 
     public String getName() {
@@ -33,7 +43,11 @@ public class SqlType {
         this.typeCode = typeCode;
     }
 
-    public String toString() {
-        return "name：" + this.name + "，typeCode：" + this.typeCode;
+    public Class<?> getType() {
+        return type;
+    }
+
+    public void setType(Class<?> type) {
+        this.type = type;
     }
 }
