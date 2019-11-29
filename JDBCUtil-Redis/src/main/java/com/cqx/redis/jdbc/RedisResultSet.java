@@ -15,19 +15,26 @@ import java.util.Map;
  *
  * @author chenqixu
  */
-public class RedisResultSet implements java.sql.ResultSet {
+public class RedisResultSet implements ResultSet {
 
-    private List<RedisRowData> rows;
+    private List<List<RedisRowData>> rows;
     private int index = 0;
-    private int columnCount = 0;
+    private RedisResultSetMetaData redisResultSetMetaData;
 
-    public RedisResultSet(int columnCount) {
+    public RedisResultSet() {
         rows = new ArrayList<>();
-        this.columnCount = columnCount;
     }
 
-    public void addRow(RedisRowData rowData) {
-        rows.add(rowData);
+    public List<RedisRowData> newRow() {
+        List<RedisRowData> newRow = new ArrayList<>();
+        // 第一行是空记录
+        addColumnData(newRow, new RedisRowData());
+        rows.add(newRow);
+        return newRow;
+    }
+
+    public void addColumnData(List<RedisRowData> newRow, RedisRowData rowData) {
+        if (newRow != null) newRow.add(rowData);
     }
 
     @Override
@@ -52,7 +59,8 @@ public class RedisResultSet implements java.sql.ResultSet {
 
     @Override
     public String getString(int columnIndex) throws SQLException {
-        if (index > 0) return rows.get(index - 1).getValue(columnIndex - 1);
+        if (columnIndex == 0) throw new SQLException("不支持的列");
+        if (index > 0) return rows.get(index - 1).get(columnIndex).getValue().toString();
         return null;
     }
 
@@ -228,11 +236,13 @@ public class RedisResultSet implements java.sql.ResultSet {
 
     @Override
     public ResultSetMetaData getMetaData() throws SQLException {
-        return new RedisResultSetMetaData(columnCount);
+        return redisResultSetMetaData;
     }
 
     @Override
     public Object getObject(int columnIndex) throws SQLException {
+        if (columnIndex == 0) throw new SQLException("不支持的列");
+        if (index > 0) return rows.get(index - 1).get(columnIndex).getValue();
         return null;
     }
 
@@ -989,5 +999,9 @@ public class RedisResultSet implements java.sql.ResultSet {
     @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
         return false;
+    }
+
+    public void setRedisResultSetMetaData(RedisResultSetMetaData redisResultSetMetaData) {
+        this.redisResultSetMetaData = redisResultSetMetaData;
     }
 }

@@ -1,6 +1,10 @@
 package com.cqx.redis.jdbc;
 
+import com.cqx.redis.bean.table.HashTable;
+
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * redis结果集元数据
@@ -9,15 +13,34 @@ import java.sql.SQLException;
  */
 public class RedisResultSetMetaData implements java.sql.ResultSetMetaData {
 
-    private int columnCount = 0;
+    private String[] fields_arr;
+    private List<RedisColumn> redisColumnList = new ArrayList<>();
 
-    public RedisResultSetMetaData(int columnCount) {
-        this.columnCount = columnCount;
+    public RedisResultSetMetaData(HashTable hashTable) {
+        this(hashTable.getQuery_fields_arr());
+        // 第一行是空记录
+        redisColumnList.add(new RedisColumn());
+        for (String field : fields_arr) {
+            redisColumnList.add(hashTable.getRedisColumnByName(field));
+        }
+    }
+
+    /**
+     * 传入查询字段
+     *
+     * @param fields
+     */
+    public RedisResultSetMetaData(String fields) {
+        fields_arr = fields.split(",", -1);
+    }
+
+    public RedisResultSetMetaData(String[] fields_arr) {
+        this.fields_arr = fields_arr;
     }
 
     @Override
     public int getColumnCount() throws SQLException {
-        return columnCount;
+        return fields_arr.length;
     }
 
     @Override
@@ -57,12 +80,14 @@ public class RedisResultSetMetaData implements java.sql.ResultSetMetaData {
 
     @Override
     public String getColumnLabel(int column) throws SQLException {
-        return null;
+        if (column == 0) throw new SQLException("不支持的列");
+        return redisColumnList.get(column).getLabel();
     }
 
     @Override
     public String getColumnName(int column) throws SQLException {
-        return null;
+        if (column == 0) throw new SQLException("不支持的列");
+        return redisColumnList.get(column).getName();
     }
 
     @Override
@@ -92,12 +117,14 @@ public class RedisResultSetMetaData implements java.sql.ResultSetMetaData {
 
     @Override
     public int getColumnType(int column) throws SQLException {
-        return 0;
+        if (column == 0) throw new SQLException("不支持的列");
+        return redisColumnList.get(column).getType();
     }
 
     @Override
     public String getColumnTypeName(int column) throws SQLException {
-        return null;
+        if (column == 0) throw new SQLException("不支持的列");
+        return redisColumnList.get(column).getTypeName();
     }
 
     @Override
@@ -117,7 +144,8 @@ public class RedisResultSetMetaData implements java.sql.ResultSetMetaData {
 
     @Override
     public String getColumnClassName(int column) throws SQLException {
-        return null;
+        if (column == 0) throw new SQLException("不支持的列");
+        return redisColumnList.get(column).getClassName();
     }
 
     @Override

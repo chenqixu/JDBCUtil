@@ -1,6 +1,7 @@
 package com.cqx.redis.jdbc;
 
 import com.cqx.redis.client.RedisClient;
+import com.cqx.redis.impl.RedisHashSqlParser;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -14,22 +15,27 @@ import java.sql.SQLWarning;
  */
 public class RedisStatement implements java.sql.Statement {
 
-    private RedisSqlParser redisSqlParser;
+//    private RedisSqlParser redisSqlParser;
+    private RedisHashSqlParser redisHashSqlParser;
 
     public RedisStatement(RedisClient rc) {
-        redisSqlParser = new RedisSqlParser(rc);
+//        redisSqlParser = new RedisSqlParser(rc);
+        redisHashSqlParser = new RedisHashSqlParser(rc);
     }
 
     @Override
     public ResultSet executeQuery(String sql) throws SQLException {
-        redisSqlParser.parser(sql);
-        return redisSqlParser.getRedisResultSet();
+//        redisSqlParser.parser(sql);
+//        return redisSqlParser.getRedisResultSet();
+        redisHashSqlParser.parser(sql);
+        redisHashSqlParser.execute(null);
+        return redisHashSqlParser.getRedisResultSet();
     }
 
     @Override
     public int executeUpdate(String sql) throws SQLException {
-        redisSqlParser.parser(sql);
-        return redisSqlParser.getRedisResultSet();
+        redisHashSqlParser.parser(sql);
+        return redisHashSqlParser.execute(null);
     }
 
     @Override

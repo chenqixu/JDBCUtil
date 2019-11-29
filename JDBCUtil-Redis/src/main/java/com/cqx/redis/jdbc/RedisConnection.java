@@ -41,7 +41,9 @@ public class RedisConnection implements java.sql.Connection {
 
     @Override
     public PreparedStatement prepareStatement(String sql) throws SQLException {
-        return null;
+        RedisPreparedStatement redisPreparedStatement = new RedisPreparedStatement(rc);
+        redisPreparedStatement.prepare(sql);
+        return redisPreparedStatement;
     }
 
     @Override

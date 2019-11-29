@@ -1,22 +1,24 @@
 package com.cqx.redis.impl;
 
 import com.cqx.redis.client.RedisClient;
+import com.cqx.redis.jdbc.RedisResultSet;
 
 import java.sql.SQLException;
+import java.util.Map;
 
 /**
- * 解析接口
+ * IRedisParser
  *
  * @author chenqixu
  */
 public interface IRedisParser {
-    void setRc(RedisClient rc);
+    boolean checkType(String sql);
 
-    void setSql(String sql);
+    void init(RedisClient rc, boolean isPrepared) throws SQLException;
 
-    void splitSql() throws SQLException;
+    String[] getFieldsArr();
 
-    void deal() throws SQLException;
+    int run(Map<String, String> _fieldMap) throws SQLException;
 
-    <T> T getRedisResultSet();
+    RedisResultSet getRedisResultSet();
 }
