@@ -12,7 +12,7 @@ import java.util.Map;
  *
  * @author chenqixu
  */
-public class HashTable {
+public class HashTable implements Cloneable {
     private String fields;// 表字段
     private String[] fields_arr;// 表字段数组
     private String query_fields;// 查询字段
@@ -24,9 +24,6 @@ public class HashTable {
     private RedisColumn[] redisColumns;
     private Map<String, RedisColumn> redisColumnMap = new HashMap<>();
     private List<HashTableQuery> hashTableQueryList = new ArrayList<>();
-
-    public HashTable() {
-    }
 
     public HashTable(String fields, String def_field, String def_key, RedisColumn[] redisColumns) {
         this.fields = fields;
@@ -114,4 +111,15 @@ public class HashTable {
         return fields_arr;
     }
 
+    private void newHashTableQueryList() {
+        hashTableQueryList = new ArrayList<>();
+    }
+
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        Object object = super.clone();
+        // 拷贝后，如果有指针，还是指针，所以必须new
+        ((HashTable) object).newHashTableQueryList();
+        return object;
+    }
 }

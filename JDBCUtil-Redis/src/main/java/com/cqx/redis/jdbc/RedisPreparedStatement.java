@@ -1,8 +1,11 @@
 package com.cqx.redis.jdbc;
 
+import com.cqx.redis.bean.table.HashTable;
+import com.cqx.redis.bean.table.HashTableField;
+import com.cqx.redis.bean.table.HashTableFieldMap;
 import com.cqx.redis.client.RedisClient;
 import com.cqx.redis.impl.RedisHashSqlParser;
-import com.cqx.redis.bean.table.HashTableField;
+import com.cqx.redis.utils.CommonUtils;
 
 import java.io.InputStream;
 import java.io.Reader;
@@ -19,12 +22,13 @@ import java.util.*;
  */
 public class RedisPreparedStatement implements PreparedStatement {
 
-    private List<HashTableField> fieldList = new ArrayList<>();
-    private List<Map<String, String>> fieldMapList = new ArrayList<>();
+    private HashTableFieldMap hashTableFieldMap = new HashTableFieldMap();
+    private List<Map<String, String>> hashTableFieldMapList = new ArrayList<>();
     private RedisClient rc;
     private String sql;
     private RedisHashSqlParser redisHashSqlParser;
     private String[] fields_arr;
+    private HashTable hashTable;
 
     public RedisPreparedStatement(RedisClient rc) {
         this.rc = rc;
@@ -40,6 +44,7 @@ public class RedisPreparedStatement implements PreparedStatement {
         this.sql = sql;
         redisHashSqlParser.parser(sql);
         fields_arr = redisHashSqlParser.getFieldsArr();
+        hashTable = redisHashSqlParser.getHashTable();
     }
 
     @Override
@@ -52,6 +57,12 @@ public class RedisPreparedStatement implements PreparedStatement {
     @Override
     public int executeUpdate() throws SQLException {
         return 0;
+    }
+
+    private HashTableField createHashTableField(int parameterIndex, Object x) throws SQLException {
+        if (parameterIndex > fields_arr.length)
+            throw CommonUtils.createSQLException("不支持的列，索引：" + parameterIndex);
+        return new HashTableField(parameterIndex, fields_arr[parameterIndex - 1], x, hashTable.getRedisColumnByName(fields_arr[parameterIndex - 1]));
     }
 
     @Override
@@ -71,38 +82,44 @@ public class RedisPreparedStatement implements PreparedStatement {
 
     @Override
     public void setShort(int parameterIndex, short x) throws SQLException {
-        fieldList.add(new HashTableField(parameterIndex, String.valueOf(x)));
+        // 根据prepare出来的字段映射，来获取字段名称
+        hashTableFieldMap.put(createHashTableField(parameterIndex, x));
     }
 
     @Override
     public void setInt(int parameterIndex, int x) throws SQLException {
-        fieldList.add(new HashTableField(parameterIndex, String.valueOf(x)));
+        // 根据prepare出来的字段映射，来获取字段名称
+        hashTableFieldMap.put(createHashTableField(parameterIndex, x));
     }
 
     @Override
     public void setLong(int parameterIndex, long x) throws SQLException {
-        fieldList.add(new HashTableField(parameterIndex, String.valueOf(x)));
+        // 根据prepare出来的字段映射，来获取字段名称
+        hashTableFieldMap.put(createHashTableField(parameterIndex, x));
     }
 
     @Override
     public void setFloat(int parameterIndex, float x) throws SQLException {
-        fieldList.add(new HashTableField(parameterIndex, String.valueOf(x)));
+        // 根据prepare出来的字段映射，来获取字段名称
+        hashTableFieldMap.put(createHashTableField(parameterIndex, x));
     }
 
     @Override
     public void setDouble(int parameterIndex, double x) throws SQLException {
-        fieldList.add(new HashTableField(parameterIndex, String.valueOf(x)));
+        // 根据prepare出来的字段映射，来获取字段名称
+        hashTableFieldMap.put(createHashTableField(parameterIndex, x));
     }
 
     @Override
     public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException {
-        fieldList.add(new HashTableField(parameterIndex, String.valueOf(x)));
+        // 根据prepare出来的字段映射，来获取字段名称
+        hashTableFieldMap.put(createHashTableField(parameterIndex, x));
     }
 
     @Override
     public void setString(int parameterIndex, String x) throws SQLException {
         // 根据prepare出来的字段映射，来获取字段名称
-        fieldList.add(new HashTableField(parameterIndex, fields_arr[parameterIndex - 1], x));
+        hashTableFieldMap.put(createHashTableField(parameterIndex, x));
     }
 
     @Override
@@ -112,17 +129,20 @@ public class RedisPreparedStatement implements PreparedStatement {
 
     @Override
     public void setDate(int parameterIndex, Date x) throws SQLException {
-        fieldList.add(new HashTableField(parameterIndex, x.toString()));
+        // 根据prepare出来的字段映射，来获取字段名称
+        hashTableFieldMap.put(createHashTableField(parameterIndex, x));
     }
 
     @Override
     public void setTime(int parameterIndex, Time x) throws SQLException {
-        fieldList.add(new HashTableField(parameterIndex, x.toString()));
+        // 根据prepare出来的字段映射，来获取字段名称
+        hashTableFieldMap.put(createHashTableField(parameterIndex, x));
     }
 
     @Override
     public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException {
-        fieldList.add(new HashTableField(parameterIndex, x.toString()));
+        // 根据prepare出来的字段映射，来获取字段名称
+        hashTableFieldMap.put(createHashTableField(parameterIndex, x));
     }
 
     @Override
@@ -167,16 +187,23 @@ public class RedisPreparedStatement implements PreparedStatement {
      */
     @Override
     public void addBatch() throws SQLException {
-        // 排序
-        Collections.sort(fieldList);
+//        // 排序
+//        Collections.sort(fieldList);
+//        Map<String, String> fieldMap = new HashMap<>();
+//        // 把内容写入字段映射关系
+//        for (int i = 0; i < fieldList.size(); i++) {
+//            fieldMap.put(fields_arr[i], fieldList.get(i).getFiledValue());
+//        }
+//        fieldMapList.add(fieldMap);
+//        // 清理List
+//        fieldList.clear();
+        // 数据拷贝
         Map<String, String> fieldMap = new HashMap<>();
-        // 把内容写入字段映射关系
-        for (int i = 0; i < fieldList.size(); i++) {
-            fieldMap.put(fields_arr[i], fieldList.get(i).getFiledValue());
-        }
-        fieldMapList.add(fieldMap);
-        // 清理List
-        fieldList.clear();
+        fieldMap.putAll(hashTableFieldMap);
+        // 加入List
+        hashTableFieldMapList.add(fieldMap);
+        // 清理
+        hashTableFieldMap.clear();
     }
 
     @Override
@@ -346,7 +373,7 @@ public class RedisPreparedStatement implements PreparedStatement {
 
     @Override
     public void close() throws SQLException {
-
+        redisHashSqlParser.close();
     }
 
     @Override
@@ -472,12 +499,12 @@ public class RedisPreparedStatement implements PreparedStatement {
      */
     @Override
     public int[] executeBatch() throws SQLException {
-        int[] rets = new int[fieldMapList.size()];
-        for (int i = 0; i < fieldMapList.size(); i++) {
-            rets[i] = redisHashSqlParser.execute(fieldMapList.get(i));
+        int[] rets = new int[hashTableFieldMapList.size()];
+        for (int i = 0; i < hashTableFieldMapList.size(); i++) {
+            rets[i] = redisHashSqlParser.execute(hashTableFieldMapList.get(i));
         }
         // 清理List
-        fieldMapList.clear();
+        hashTableFieldMapList.clear();
         return rets;
     }
 

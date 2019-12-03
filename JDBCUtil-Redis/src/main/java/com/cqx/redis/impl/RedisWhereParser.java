@@ -4,6 +4,7 @@ import com.cqx.redis.bean.table.CartesianProduct;
 import com.cqx.redis.bean.table.HashTable;
 import com.cqx.redis.bean.table.HashTableConstant;
 import com.cqx.redis.bean.table.HashTableQuery;
+import com.cqx.redis.comm.RedisConst;
 import com.cqx.redis.utils.CommonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,10 +19,10 @@ import java.util.*;
  */
 public class RedisWhereParser {
 
-    private static final String SQL_WHERE = " where ";
-    private static final String SQL_AND = " and ";
-    private static final String SQL_EQUAL = "=";
-    private static final String SQL_IN = " in";
+    private static final String SQL_WHERE = RedisConst.KEY_WHERE_SPACE;
+    private static final String SQL_AND = RedisConst.KEY_AND_SPACE;
+    private static final String SQL_EQUAL = RedisConst.KEY_EQUAL;
+    private static final String SQL_IN = RedisConst.KEY_IN;
     private static final Logger logger = LoggerFactory.getLogger(RedisWhereParser.class);
 
     private String tableName;
@@ -38,10 +39,6 @@ public class RedisWhereParser {
 
     public RedisWhereParser(boolean isPrepared) {
         this.isPrepared = isPrepared;
-    }
-
-    public RedisWhereParser(boolean hasCartesianProduct, boolean hasKeyMust) {
-        this(hasCartesianProduct, hasKeyMust, false);
     }
 
     public RedisWhereParser(boolean hasCartesianProduct, boolean hasKeyMust, boolean isPrepared) {

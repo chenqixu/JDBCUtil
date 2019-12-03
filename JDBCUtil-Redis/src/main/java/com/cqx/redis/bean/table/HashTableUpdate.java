@@ -17,20 +17,22 @@ public class HashTableUpdate {
     private String key;
     private String value_old;
     private String value_new;
-    private Map<String, String> updateFieldsMap;
+    private HashTableFieldMap updateFieldsMap;
     private HashTable hashTable;// 表定义
     // 更新有三种情况：1、更新field和value；2、更新field；3、更新value
     // 如果：【实际上value无论如何都会更新，所以只要判断field是否更新
     // 更新有两种情况：1、更新field和value；2、更新value】
     private boolean isUpdateField;// 是否更新field
     private boolean isUpdateValue;// 是否更新value
+    private String[] updateFields;// 更新字段数组
 
     public HashTableUpdate() {
     }
 
-    public HashTableUpdate(Map<String, String> updateFieldsMap, HashTable hashTable) {
+    public HashTableUpdate(HashTableFieldMap updateFieldsMap, HashTable hashTable, String updateFields) {
         this.updateFieldsMap = updateFieldsMap;
         this.hashTable = hashTable;
+        this.updateFields = updateFields.split(",", -1);
     }
 
     public void setOldValue(String field, String key, String value) {
@@ -102,7 +104,7 @@ public class HashTableUpdate {
         return updateFieldsMap;
     }
 
-    public void setUpdateFieldsMap(Map<String, String> updateFieldsMap) {
+    public void setUpdateFieldsMap(HashTableFieldMap updateFieldsMap) {
         this.updateFieldsMap = updateFieldsMap;
     }
 
@@ -122,5 +124,8 @@ public class HashTableUpdate {
         isUpdateValue = updateValue;
     }
 
+    public String[] getUpdateFields() {
+        return updateFields;
+    }
 }
 

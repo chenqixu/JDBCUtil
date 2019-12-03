@@ -1,16 +1,18 @@
 package com.cqx.redis.impl;
 
-import com.cqx.redis.client.RedisClient;
-import com.cqx.redis.jdbc.RedisResultSet;
 import com.cqx.redis.bean.table.HashTable;
 import com.cqx.redis.bean.table.HashTableConstant;
+import com.cqx.redis.bean.table.HashTableField;
+import com.cqx.redis.bean.table.HashTableFieldMap;
+import com.cqx.redis.client.RedisClient;
+import com.cqx.redis.comm.RedisConst;
+import com.cqx.redis.jdbc.RedisResultSet;
 import com.cqx.redis.utils.CommonUtils;
 import com.cqx.redis.utils.StartsWithResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -20,10 +22,10 @@ import java.util.Map;
  */
 public class InsertIntoRedisParser implements IRedisParser {
 
-    private static final String SQL_KEY = "insert";
-    private static final String SQL_INTO = "into";
-    private static final String SQL_VALUES = "values";
-    private static final String SQL_SELECT = " select ";
+    private static final String SQL_KEY = RedisConst.KEY_INSERT;
+    private static final String SQL_INTO = RedisConst.KEY_INTO;
+    private static final String SQL_VALUES = RedisConst.KEY_VALUES;
+    private static final String SQL_SELECT = RedisConst.KEY_SELECT_SPACE;
     private static final Logger logger = LoggerFactory.getLogger(InsertIntoRedisParser.class);
 
     static {
@@ -37,7 +39,7 @@ public class InsertIntoRedisParser implements IRedisParser {
     private boolean isPrepared;
     private boolean isSelect = false;// 值是从select来，默认是false
     private SelectRedisParser selectRedisParser;
-    private Map<String, String> statementFieldMap;
+    private HashTableFieldMap statementFieldMap;
 
     /**
      * 严谨一点，先校验insert，然后校验后面是不是紧跟着into
@@ -115,7 +117,7 @@ public class InsertIntoRedisParser implements IRedisParser {
         }
 
         if (!isPrepared && !isSelect) {// Statement
-            statementFieldMap = new HashMap<>();
+            statementFieldMap = new HashTableFieldMap();
             // 解析values里的内容，需要支持select
             // insert into table_name(field1,field2,field3) values('','','');
             String _values = _sql_arr[1].trim();// values后面的内容
@@ -129,7 +131,11 @@ public class InsertIntoRedisParser implements IRedisParser {
             }
             // 设置值到filedMap中
             for (int i = 0; i < hashTable.getQuery_fields_arr().length; i++) {
-                statementFieldMap.put(hashTable.getQuery_fields_arr()[i], _values_arr[i]);
+                // 这里是直接设置filedValueStr
+                statementFieldMap.put(new HashTableField(i,
+                        hashTable.getQuery_fields_arr()[i],
+                        _values_arr[i],
+                        hashTable.getRedisColumnByName(hashTable.getQuery_fields_arr()[i])));
             }
         }
     }
@@ -173,7 +179,6 @@ public class InsertIntoRedisParser implements IRedisParser {
     private int insertInto(Map<String, String> _fieldMap) {
         String field = getField(_fieldMap);
         String key = getKey(_fieldMap);
-//        String value = getValue(_fieldMap);
         String value = CommonUtils.changeMapToJSON(hashTable.getQuery_fields_arr(), _fieldMap);
         long ret = rc.hset(field, key, value);
         return Integer.valueOf(String.valueOf(ret));
@@ -207,30 +212,19 @@ public class InsertIntoRedisParser implements IRedisParser {
         return sb.toString();
     }
 
-//    /**
-//     * 拼接value，根据insert into字段可变
-//     *
-//     * @param valueMap
-//     * @return
-//     */
-//    private String getValue(Map<String, String> valueMap) {
-//        StringBuilder sb = new StringBuilder("{");
-//        for (String value : hashTable.getQuery_fields_arr()) {
-//            String _v = valueMap.get(value);
-//            if (_v != null && _v.length() > 0) {
-//                sb.append("\"" + value)
-//                        .append("\":\"")
-//                        .append(_v)
-//                        .append("\",");
-//            }
-//        }
-//        sb.deleteCharAt(sb.length() - 1);
-//        sb.append("}");
-//        return sb.toString();
-//    }
-
     @Override
     public RedisResultSet getRedisResultSet() {
         return null;
     }
+
+    @Override
+    public HashTable getHashTable() {
+        return hashTable;
+    }
+
+    @Override
+    public void close() {
+
+    }
+
 }

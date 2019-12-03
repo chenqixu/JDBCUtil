@@ -157,4 +157,8 @@ public class RedisResultSetMetaData implements java.sql.ResultSetMetaData {
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
         return false;
     }
+
+    public String[] getFields_arr() {
+        return fields_arr;
+    }
 }

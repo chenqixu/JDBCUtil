@@ -1,13 +1,13 @@
 package com.cqx.redis.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.cqx.redis.bean.table.HashTable;
+import com.cqx.redis.bean.table.HashTableConstant;
+import com.cqx.redis.bean.table.HashTableQuery;
 import com.cqx.redis.client.RedisClient;
 import com.cqx.redis.jdbc.RedisResultSet;
 import com.cqx.redis.jdbc.RedisResultSetMetaData;
 import com.cqx.redis.jdbc.RedisRowData;
-import com.cqx.redis.bean.table.HashTable;
-import com.cqx.redis.bean.table.HashTableConstant;
-import com.cqx.redis.bean.table.HashTableQuery;
 import com.cqx.redis.utils.CommonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +36,7 @@ public class SelectRedisParser implements IRedisParser {
     private RedisClient rc;
     private String sql;// 转小写的SQL
     private RedisResultSet redisResultSet;
+    private RedisResultSetMetaData redisResultSetMetaData;// 元数据
     private HashTable hashTable;
     private boolean isSetRedisHash = false;// 是否不用redisResultSet，而是存入redisHashResult中
     private Map<String, Map<String, String>> redisHashResult = new HashMap<>();
@@ -83,7 +84,7 @@ public class SelectRedisParser implements IRedisParser {
             redisResultSet = new RedisResultSet();
 
             // 设置MetaData
-            RedisResultSetMetaData redisResultSetMetaData = new RedisResultSetMetaData(hashTable);
+            redisResultSetMetaData = new RedisResultSetMetaData(hashTable);
             redisResultSet.setRedisResultSetMetaData(redisResultSetMetaData);
 
             // 解析查询条件，根据查询条件循环插入表定义hashTableDef的hashTableQueryList
@@ -154,7 +155,8 @@ public class SelectRedisParser implements IRedisParser {
             Map<String, String> valueMap = new HashMap<>();
             // 按查询字段顺序插入
             for (String _field : hashTable.getQuery_fields_arr()) {
-                valueMap.put(_field, queryMap.get(_field).toString());
+                String _value = queryMap.get(_field) == null ? null : queryMap.get(_field).toString();
+                valueMap.put(_field, _value);
             }
             redisHashResult.put(field, valueMap);
         } else {// 到ResultSet
@@ -188,4 +190,15 @@ public class SelectRedisParser implements IRedisParser {
     public int getQuery_fields_len() {
         return hashTable.getQuery_fields_arr().length;
     }
+
+    @Override
+    public HashTable getHashTable() {
+        return hashTable;
+    }
+
+    @Override
+    public void close() {
+
+    }
+
 }

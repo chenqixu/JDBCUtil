@@ -1,5 +1,6 @@
 package com.cqx.redis.impl;
 
+import com.cqx.redis.bean.table.HashTable;
 import com.cqx.redis.client.RedisClient;
 import com.cqx.redis.jdbc.RedisResultSet;
 import org.slf4j.Logger;
@@ -90,4 +91,16 @@ public class RedisHashSqlParser {
     public RedisResultSet getRedisResultSet() {
         return iRedisParser.getRedisResultSet();
     }
+
+    public HashTable getHashTable() {
+        return iRedisParser.getHashTable();
+    }
+
+    /**
+     * 资源释放
+     */
+    public void close() {
+        iRedisParser.close();
+    }
+
 }

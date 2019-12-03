@@ -1,6 +1,7 @@
 package com.cqx.redis.bean.table;
 
 import com.cqx.redis.jdbc.RedisColumn;
+import com.cqx.redis.utils.CommonUtils;
 
 import java.sql.SQLException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -42,8 +43,15 @@ public class HashTableConstant {
         hashTableMap.put("fjbi_busdatacollect_list", fjbi_busdatacollect_list);
     }
 
-    public static HashTable getHashTableByName(String tableName) {
-        return hashTableMap.get(tableName);
+    public static HashTable getHashTableByName(String tableName) throws SQLException {
+        // 由于查询条件放在静态类中，必须进行拷贝，否则会有BUG
+        HashTable cloneHashTable;
+        try {
+            cloneHashTable = (HashTable) hashTableMap.get(tableName).clone();
+        } catch (CloneNotSupportedException e) {
+            throw CommonUtils.createSQLException("表未创建：" + tableName);
+        }
+        return cloneHashTable;
     }
 
     public static void checkFields(String _fields, HashTable hashTable) throws SQLException {

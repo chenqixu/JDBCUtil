@@ -59,9 +59,9 @@ public class RedisResultSet implements ResultSet {
 
     @Override
     public String getString(int columnIndex) throws SQLException {
-        if (columnIndex == 0) throw new SQLException("不支持的列");
-        if (index > 0) return rows.get(index - 1).get(columnIndex).getValue().toString();
-        return null;
+        Object _value = getObject(columnIndex);
+        if (_value != null) return _value.toString();
+        else return null;
     }
 
     @Override
@@ -81,7 +81,9 @@ public class RedisResultSet implements ResultSet {
 
     @Override
     public int getInt(int columnIndex) throws SQLException {
-        return 0;
+        Object _value = getObject(columnIndex);
+        if (_value != null) return Integer.valueOf(_value.toString());
+        else return 0;
     }
 
     @Override
@@ -111,17 +113,23 @@ public class RedisResultSet implements ResultSet {
 
     @Override
     public Date getDate(int columnIndex) throws SQLException {
-        return null;
+        Object _value = getObject(columnIndex);
+        if (_value != null) return new Date(Long.valueOf(_value.toString()));
+        else return null;
     }
 
     @Override
     public Time getTime(int columnIndex) throws SQLException {
-        return null;
+        Object _value = getObject(columnIndex);
+        if (_value != null) return new Time(Long.valueOf(_value.toString()));
+        else return null;
     }
 
     @Override
     public Timestamp getTimestamp(int columnIndex) throws SQLException {
-        return null;
+        Object _value = getObject(columnIndex);
+        if (_value != null) return new Timestamp(Long.valueOf(_value.toString()));
+        else return null;
     }
 
     @Override

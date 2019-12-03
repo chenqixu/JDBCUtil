@@ -1,9 +1,10 @@
 package com.cqx.redis.impl;
 
-import com.cqx.redis.client.RedisClient;
-import com.cqx.redis.jdbc.RedisResultSet;
 import com.cqx.redis.bean.table.HashTable;
 import com.cqx.redis.bean.table.HashTableQuery;
+import com.cqx.redis.client.RedisClient;
+import com.cqx.redis.comm.RedisConst;
+import com.cqx.redis.jdbc.RedisResultSet;
 import com.cqx.redis.utils.CommonUtils;
 import com.cqx.redis.utils.StartsWithResult;
 import org.slf4j.Logger;
@@ -19,9 +20,9 @@ import java.util.Map;
  */
 public class DeleteRedisParser implements IRedisParser {
 
-    private static final String SQL_KEY = "delete";
-    private static final String SQL_FROM = "from";
-    private static final String SQL_WHERE = " where ";
+    private static final String SQL_KEY = RedisConst.KEY_DELETE;
+    private static final String SQL_FROM = RedisConst.KEY_FROM;
+    private static final String SQL_WHERE = RedisConst.KEY_WHERE_SPACE;
     private static final Logger logger = LoggerFactory.getLogger(DeleteRedisParser.class);
 
     static {
@@ -123,4 +124,15 @@ public class DeleteRedisParser implements IRedisParser {
     public RedisResultSet getRedisResultSet() {
         return null;
     }
+
+    @Override
+    public HashTable getHashTable() {
+        return hashTable;
+    }
+
+    @Override
+    public void close() {
+
+    }
+
 }

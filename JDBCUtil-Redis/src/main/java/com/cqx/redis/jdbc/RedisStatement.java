@@ -15,18 +15,14 @@ import java.sql.SQLWarning;
  */
 public class RedisStatement implements java.sql.Statement {
 
-//    private RedisSqlParser redisSqlParser;
     private RedisHashSqlParser redisHashSqlParser;
 
     public RedisStatement(RedisClient rc) {
-//        redisSqlParser = new RedisSqlParser(rc);
         redisHashSqlParser = new RedisHashSqlParser(rc);
     }
 
     @Override
     public ResultSet executeQuery(String sql) throws SQLException {
-//        redisSqlParser.parser(sql);
-//        return redisSqlParser.getRedisResultSet();
         redisHashSqlParser.parser(sql);
         redisHashSqlParser.execute(null);
         return redisHashSqlParser.getRedisResultSet();
@@ -40,7 +36,7 @@ public class RedisStatement implements java.sql.Statement {
 
     @Override
     public void close() throws SQLException {
-
+        redisHashSqlParser.close();
     }
 
     @Override

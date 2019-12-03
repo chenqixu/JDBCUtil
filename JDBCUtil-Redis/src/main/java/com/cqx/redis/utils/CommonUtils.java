@@ -146,6 +146,12 @@ public class CommonUtils {
         return new SQLException("SQL语法错误，" + msg + "，请检查");
     }
 
+    /**
+     * int数组转化成Integer数组
+     *
+     * @param ret
+     * @return
+     */
     public static Integer[] changeIntToIntegerArray(int[] ret) {
         Integer[] result = new Integer[ret.length];
         for (int i = 0; i < ret.length; i++) {
@@ -153,4 +159,23 @@ public class CommonUtils {
         }
         return result;
     }
+
+    /**
+     * 字符数组拼接，arr1+arr2
+     *
+     * @param arr1
+     * @param arr2
+     * @return
+     */
+    public static String[] appendStrArray(String[] arr1, String[] arr2) {
+        String[] new_arr = new String[arr1.length + arr2.length];
+        for (int i = 0; i < arr1.length; i++) {
+            new_arr[i] = arr1[i];
+        }
+        for (int i = arr1.length; i < new_arr.length; i++) {
+            new_arr[i] = arr2[i - arr1.length];
+        }
+        return new_arr;
+    }
+
 }

@@ -1,17 +1,13 @@
 package com.cqx.redis.impl;
 
+import com.cqx.redis.bean.table.*;
 import com.cqx.redis.client.RedisClient;
 import com.cqx.redis.jdbc.RedisResultSet;
-import com.cqx.redis.bean.table.HashTable;
-import com.cqx.redis.bean.table.HashTableConstant;
-import com.cqx.redis.bean.table.HashTableQuery;
-import com.cqx.redis.bean.table.HashTableUpdate;
 import com.cqx.redis.utils.CommonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -40,6 +36,7 @@ public class UpdateRedisParser implements IRedisParser {
     private HashTable hashTable;
     private HashTableUpdate hashTableUpdate;// 更新对象
     private RedisWhereParser redisWhereParser;// where解析处理类
+    private boolean isPrepared;
 
     @Override
     public boolean checkType(String sql) {
@@ -53,6 +50,7 @@ public class UpdateRedisParser implements IRedisParser {
     @Override
     public void init(RedisClient rc, boolean isPrepared) throws SQLException {
         this.rc = rc;
+        this.isPrepared = isPrepared;
         // 解析SQL，获取表名，条件
         // update tablename set field3='',field4='' where field1='' and field2='';
         // update tablename set field3=?,field4=? where field1=? and field2=?;
@@ -97,7 +95,8 @@ public class UpdateRedisParser implements IRedisParser {
         // statement：field3='',field4=''
         // preparedStatement：field3=?,field4=?
         // preparedStatement：field3=:field3,field4=:field4
-        Map<String, String> updateFieldsMap = new HashMap<>();
+//        Map<String, String> updateFieldsMap = new HashMap<>();
+        HashTableFieldMap updateFieldsMap = new HashTableFieldMap();
         String[] update_fields_arr = update_fields.split(",", -1);// 按逗号分隔
         // 按"="分隔，重新拼凑一个做为校验字段
         StringBuffer sb = new StringBuffer();
@@ -105,13 +104,18 @@ public class UpdateRedisParser implements IRedisParser {
             String[] _field_arr = _update_field.split(SQL_EQUAL, -1);
             if (_field_arr.length != 2) throw CommonUtils.createSQLException("字段后面必须带上更新的值");
             sb.append(_field_arr[0]).append(",");
-            updateFieldsMap.put(_field_arr[0], _field_arr[1]);
+            if (isPrepared) {// PreparedStatement
+                updateFieldsMap.put(_field_arr[0], "");
+            } else {// Statement
+                // 这里是直接设置filedValueStr
+                updateFieldsMap.put(new HashTableField(_field_arr[0], _field_arr[1], hashTable.getRedisColumnByName(_field_arr[0])));
+            }
         }
         if (sb.length() > 0) sb.deleteCharAt(sb.length() - 1);
         // 校验更新字段是否在定义内
         HashTableConstant.checkFields(sb.toString(), hashTable);
         // 根据更新的字段和值，以及表定义，生成HashTableUpdate对象
-        hashTableUpdate = new HashTableUpdate(updateFieldsMap, hashTable);
+        hashTableUpdate = new HashTableUpdate(updateFieldsMap, hashTable, sb.toString());
     }
 
     /**
@@ -121,7 +125,7 @@ public class UpdateRedisParser implements IRedisParser {
      */
     @Override
     public String[] getFieldsArr() {
-        return redisWhereParser.getWhereKeyArr();
+        return CommonUtils.appendStrArray(hashTableUpdate.getUpdateFields(), redisWhereParser.getWhereKeyArr());
     }
 
     /**
@@ -139,6 +143,14 @@ public class UpdateRedisParser implements IRedisParser {
         int ret = 0;
         // 拼接所有的条件，确认使用hgetAll还是hget
         redisWhereParser.connectingCondition(_fieldMap);
+        // 重新设置更新的值，PreparedStatement
+        if (isPrepared) {
+            // 循环更新的字段Map，把值设置进去
+            Map<String, String> _updateMap = hashTableUpdate.getUpdateFieldsMap();
+            for (Map.Entry<String, String> entry : _updateMap.entrySet()) {
+                _updateMap.put(entry.getKey(), _fieldMap.get(entry.getKey()));
+            }
+        }
         // 实际上List只有一个子对象
         for (HashTableQuery hashTableQuery : hashTable.getHashTableQueryList()) {
             if (hashTableQuery.isHgetAll()) {
@@ -184,5 +196,15 @@ public class UpdateRedisParser implements IRedisParser {
     @Override
     public RedisResultSet getRedisResultSet() {
         return null;
+    }
+
+    @Override
+    public HashTable getHashTable() {
+        return hashTable;
+    }
+
+    @Override
+    public void close() {
+
     }
 }

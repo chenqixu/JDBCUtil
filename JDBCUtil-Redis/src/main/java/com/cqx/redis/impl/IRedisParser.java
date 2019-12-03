@@ -1,5 +1,6 @@
 package com.cqx.redis.impl;
 
+import com.cqx.redis.bean.table.HashTable;
 import com.cqx.redis.client.RedisClient;
 import com.cqx.redis.jdbc.RedisResultSet;
 
@@ -21,4 +22,8 @@ public interface IRedisParser {
     int run(Map<String, String> _fieldMap) throws SQLException;
 
     RedisResultSet getRedisResultSet();
+
+    HashTable getHashTable();
+
+    void close();
 }

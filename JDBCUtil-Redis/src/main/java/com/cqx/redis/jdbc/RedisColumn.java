@@ -23,6 +23,11 @@ public class RedisColumn {
         this.className = className;
     }
 
+    @Override
+    public String toString() {
+        return "label：" + label + "，name：" + name + "，type：" + type + "，typeName：" + typeName + "，className：" + className;
+    }
+
     public String getLabel() {
         return label;
     }
