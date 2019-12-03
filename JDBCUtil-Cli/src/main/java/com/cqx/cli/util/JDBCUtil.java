@@ -238,7 +238,7 @@ public class JDBCUtil {
                 }
             } else if (newSql.startsWith("select")) {
                 printlnResultSet(executeQuery(newSql));
-            } else if (newSql.startsWith("insert")) {
+            } else if (newSql.startsWith("insert") || newSql.startsWith("update") || newSql.startsWith("delete")) {
                 printlnUpdateResult(executeUpdate(newSql));
             } else if (newSql.startsWith("begin")) {//执行存储过程
                 //前面删掉了结尾的;，这里需要补上
@@ -328,6 +328,15 @@ public class JDBCUtil {
         int cnt = 0;
         if (rs != null) {
             try {
+                // 打印列名
+                ResultSetMetaData resultSetMetaData = rs.getMetaData();
+                for (int i = 0; i < resultSetMetaData.getColumnCount(); i++) {
+                    CmdTool.print(resultSetMetaData.getColumnLabel(i + 1));
+                    if (i < (rs.getMetaData().getColumnCount() - 1))
+                        CmdTool.print(PrintResultSetDeal.valueSplit);
+                }
+                CmdTool.println("");
+                // 打印查询结果
                 while (rs.next() && isLimit(cnt, limit)) {
                     for (int i = 0; i < rs.getMetaData().getColumnCount(); i++) {
                         int sqlDataType = rs.getMetaData().getColumnType(i + 1);
@@ -343,8 +352,10 @@ public class JDBCUtil {
                                 break;
                             case Types.VARCHAR:
                                 t.execValue(rs.getString(i + 1));
+                                break;
                             case Types.NUMERIC:
                                 t.execValue(String.valueOf(rs.getInt(i + 1)));
+                                break;
                             default:
                                 t.execValue(rs.getString(i + 1));
                                 break;

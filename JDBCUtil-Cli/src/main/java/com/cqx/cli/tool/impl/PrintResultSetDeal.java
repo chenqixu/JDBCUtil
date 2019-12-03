@@ -7,7 +7,7 @@ package com.cqx.cli.tool.impl;
  */
 public class PrintResultSetDeal implements IResultSetDeal {
 
-    private static final String valueSplit = "|";
+    public static final String valueSplit = "|";
 
     @Override
     public void execValue(String msg) {
