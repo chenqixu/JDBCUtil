@@ -19,7 +19,7 @@ import java.util.*;
  */
 public class RedisWhereParser {
 
-    private static final String SQL_WHERE = RedisConst.KEY_WHERE_SPACE;
+    private static final String SQL_WHERE = RedisConst.KEY_WHERE_SPACE_LR;
     private static final String SQL_AND = RedisConst.KEY_AND_SPACE;
     private static final String SQL_EQUAL = RedisConst.KEY_EQUAL;
     private static final String SQL_IN = RedisConst.KEY_IN;
@@ -202,12 +202,12 @@ public class RedisWhereParser {
         // 4、如果hasKeyMust为真，则查询条件必须带key
         if (defFieldList.size() == 0 && _whereKeyList.size() == 0 && (hasKeyMust ? hasCheckKey : true)) {
         } else {
-            if (hasKeyMust ? !hasCheckKey : true) {// 查询条件没有key
+            if (hasKeyMust ? !hasCheckKey : false) {// 查询条件没有key
                 logger.warn("校验查询条件，hasKeyMust：{}，hasCheckKey：{}", hasKeyMust, hasCheckKey);
-                throw new SQLException("查询条件必须有key，请检查！");
+                throw new SQLException("查询条件必须有key【" + def_key + "】，请检查！");
             } else {// 其他
                 logger.warn("校验查询条件，定义的field剩余列表：{}，where条件剩余列表：{}", defFieldList, _whereKeyList);
-                throw new SQLException("查询条件只能在def_field、def_key范围内，def_key可以没有，但def_field必须全要，请检查！");
+                throw new SQLException("查询条件只能在def_field、def_key范围内，def_key可以没有【" + def_key + "】，但def_field必须全要【" + hashTable.getDef_field() + "】，请检查！");
             }
         }
     }
@@ -216,10 +216,6 @@ public class RedisWhereParser {
      * 打印条件Map
      */
     private void printWhereMap() {
-        // 打印条件Map
-//        for (Map.Entry<String, List<String>> entry : whereList.entrySet()) {
-//            logger.info("打印条件Map，key：{}，value：{}", entry.getKey(), entry.getValue());
-//        }
         logger.debug("打印条件Map，{}", whereList);
     }
 

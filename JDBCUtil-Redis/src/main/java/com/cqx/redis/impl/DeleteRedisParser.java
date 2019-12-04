@@ -22,7 +22,7 @@ public class DeleteRedisParser implements IRedisParser {
 
     private static final String SQL_KEY = RedisConst.KEY_DELETE;
     private static final String SQL_FROM = RedisConst.KEY_FROM;
-    private static final String SQL_WHERE = RedisConst.KEY_WHERE_SPACE;
+    private static final String SQL_WHERE = RedisConst.KEY_WHERE_SPACE_LR;
     private static final Logger logger = LoggerFactory.getLogger(DeleteRedisParser.class);
 
     static {

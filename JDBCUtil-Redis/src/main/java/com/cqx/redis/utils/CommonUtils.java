@@ -143,7 +143,7 @@ public class CommonUtils {
      * @return
      */
     public static SQLException createSQLException(String msg) {
-        return new SQLException("SQL语法错误，" + msg + "，请检查");
+        return new SQLException("SQL语法错误，" + msg + "，请检查！");
     }
 
     /**

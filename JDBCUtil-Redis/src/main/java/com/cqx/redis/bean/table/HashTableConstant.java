@@ -47,15 +47,17 @@ public class HashTableConstant {
         // 由于查询条件放在静态类中，必须进行拷贝，否则会有BUG
         HashTable cloneHashTable;
         try {
-            cloneHashTable = (HashTable) hashTableMap.get(tableName).clone();
+            HashTable _tmp = hashTableMap.get(tableName);
+            if (_tmp != null) cloneHashTable = (HashTable) _tmp.clone();
+            else throw CommonUtils.createSQLException("表未创建：" + tableName);
         } catch (CloneNotSupportedException e) {
             throw CommonUtils.createSQLException("表未创建：" + tableName);
         }
         return cloneHashTable;
     }
 
-    public static void checkFields(String _fields, HashTable hashTable) throws SQLException {
-        if (_fields == null || _fields.length() == 0) throw new SQLException("语法不正确，查询字段为空，请检查！");
+    public static void checkFields(String _fields, HashTable hashTable, String desc) throws SQLException {
+        if (_fields == null || _fields.length() == 0) throw new SQLException("语法不正确，" + desc + "字段为空，请检查！");
         String[] fields_arr = _fields.split(",", -1);
         int fields_len = fields_arr.length;
         int check_len = 0;
@@ -63,7 +65,7 @@ public class HashTableConstant {
             if (hashTable.getRedisColumnByName(field) != null) check_len++;
         }
         if (!(fields_len == check_len)) {
-            throw new SQLException("语法不正确，查询字段和定义字段不符，请检查！查询字段：" + _fields + "，定义字段：" + hashTable.getFields());
+            throw new SQLException("语法不正确，" + desc + "字段和定义字段不符，请检查！" + desc + "字段：" + _fields + "，定义字段：" + hashTable.getFields());
         }
     }
 

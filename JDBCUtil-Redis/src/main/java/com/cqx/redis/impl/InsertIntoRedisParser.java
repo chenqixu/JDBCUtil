@@ -25,7 +25,7 @@ public class InsertIntoRedisParser implements IRedisParser {
     private static final String SQL_KEY = RedisConst.KEY_INSERT;
     private static final String SQL_INTO = RedisConst.KEY_INTO;
     private static final String SQL_VALUES = RedisConst.KEY_VALUES;
-    private static final String SQL_SELECT = RedisConst.KEY_SELECT_SPACE;
+    private static final String SQL_SELECT = RedisConst.KEY_SELECT_SPACE_LR;
     private static final Logger logger = LoggerFactory.getLogger(InsertIntoRedisParser.class);
 
     static {

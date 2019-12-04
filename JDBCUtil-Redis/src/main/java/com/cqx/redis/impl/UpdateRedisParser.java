@@ -2,6 +2,7 @@ package com.cqx.redis.impl;
 
 import com.cqx.redis.bean.table.*;
 import com.cqx.redis.client.RedisClient;
+import com.cqx.redis.comm.RedisConst;
 import com.cqx.redis.jdbc.RedisResultSet;
 import com.cqx.redis.utils.CommonUtils;
 import org.slf4j.Logger;
@@ -21,10 +22,10 @@ import java.util.Map;
  */
 public class UpdateRedisParser implements IRedisParser {
 
-    private static final String SQL_KEY = "update ";
-    private static final String SQL_SET = " set ";
-    private static final String SQL_WHERE = " where ";
-    private static final String SQL_EQUAL = "=";
+    private static final String SQL_KEY = RedisConst.KEY_UPDATE_SPACE_R;
+    private static final String SQL_SET = RedisConst.KEY_SET_SPACE_LR;
+    private static final String SQL_WHERE = RedisConst.KEY_WHERE_SPACE_LR;
+    private static final String SQL_EQUAL = RedisConst.KEY_EQUAL;
     private static final Logger logger = LoggerFactory.getLogger(UpdateRedisParser.class);
 
     static {
@@ -58,11 +59,14 @@ public class UpdateRedisParser implements IRedisParser {
         String noupdate_sql = sql.replaceFirst(SQL_KEY, "").trim();// 替换掉开头的update，并去左右空格
         String[] set_arr = noupdate_sql.split(SQL_SET, -1);// 以" set "进行分割
         // 校验set关键字
-        if (set_arr.length != 2) throw new SQLException("update语句没有set关键字，请检查");
+        if (set_arr.length != 2) throw CommonUtils.createSQLException("update语句没有set关键字");
         String tableName = set_arr[0].trim();// 获取表名
-        String[] left_arr = set_arr[1].trim().split(SQL_WHERE, -1);// 去左右空格后以" where "进行分割
+        // 校验是否是where开头，没有更新字段
+        String _left = set_arr[1].trim();
+        if (_left.startsWith(RedisConst.KEY_WHERE)) throw CommonUtils.createSQLException("没有更新字段");
+        String[] left_arr = _left.split(SQL_WHERE, -1);// 去左右空格后以" where "进行分割
         // 校验where关键字
-        if (left_arr.length != 2) throw new SQLException("update语句没有where关键字，请检查");
+        if (left_arr.length != 2) throw CommonUtils.createSQLException("update语句没有where关键字");
         String update_fields = left_arr[0].trim();// 获取更新字段，并去左右空格
 
         // 拼接 tablename where field1=xx and field2=xx;语句
@@ -113,7 +117,7 @@ public class UpdateRedisParser implements IRedisParser {
         }
         if (sb.length() > 0) sb.deleteCharAt(sb.length() - 1);
         // 校验更新字段是否在定义内
-        HashTableConstant.checkFields(sb.toString(), hashTable);
+        HashTableConstant.checkFields(sb.toString(), hashTable, "更新");
         // 根据更新的字段和值，以及表定义，生成HashTableUpdate对象
         hashTableUpdate = new HashTableUpdate(updateFieldsMap, hashTable, sb.toString());
     }
@@ -155,7 +159,7 @@ public class UpdateRedisParser implements IRedisParser {
         for (HashTableQuery hashTableQuery : hashTable.getHashTableQueryList()) {
             if (hashTableQuery.isHgetAll()) {
                 // 多行记录，不正常，在上面有做不允许笛卡尔积的校验了
-                throw new SQLException("更新的条件不允许有笛卡尔积，请检查");
+                throw CommonUtils.createSQLException("更新的条件不允许有笛卡尔积");
             } else {
                 // 一行记录
                 String queryValue = rc.hget(hashTableQuery.getField(), hashTableQuery.getKey());

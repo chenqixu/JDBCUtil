@@ -5,6 +5,7 @@ import com.cqx.redis.bean.table.HashTable;
 import com.cqx.redis.bean.table.HashTableConstant;
 import com.cqx.redis.bean.table.HashTableQuery;
 import com.cqx.redis.client.RedisClient;
+import com.cqx.redis.comm.RedisConst;
 import com.cqx.redis.jdbc.RedisResultSet;
 import com.cqx.redis.jdbc.RedisResultSetMetaData;
 import com.cqx.redis.jdbc.RedisRowData;
@@ -24,9 +25,9 @@ import java.util.Map;
  */
 public class SelectRedisParser implements IRedisParser {
 
-    private static final String SQL_KEY = "select ";
-    private static final String SQL_FROM = " from ";
-    private static final String SQL_WHERE = " where ";
+    private static final String SQL_KEY = RedisConst.KEY_SELECT_SPACE_R;
+    private static final String SQL_FROM = RedisConst.KEY_FROM_SPACE_LR;
+    private static final String SQL_WHERE = RedisConst.KEY_WHERE_SPACE_LR;
     private static final Logger logger = LoggerFactory.getLogger(SelectRedisParser.class);
 
     static {
@@ -76,7 +77,7 @@ public class SelectRedisParser implements IRedisParser {
             // 获取表定义
             hashTable = redisWhereParser.getHashTable();
             // 校验字段是否和表定义一致
-            HashTableConstant.checkFields(_fields, hashTable);
+            HashTableConstant.checkFields(_fields, hashTable, "查询");
             // 设置查询字段
             hashTable.setQuery_fields(_fields);
 

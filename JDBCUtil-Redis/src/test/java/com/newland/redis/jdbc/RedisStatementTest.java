@@ -69,6 +69,7 @@ public class RedisStatementTest {
     public void select() throws Exception {
         String sql = "select task_template_id,file_name,source_machine,source_path,check_file_path,data_index,file_status,insert_time from fjbi_busdatacollect_list where task_template_id in('10000') and data_index in('1','2','3','0') and file_status in('21','20','0','1','31','40','41','50','51')";
 //        String sql = "select task_template_id,file_name,source_machine,source_path,check_file_path,data_index,file_status,insert_time from fjbi_busdatacollect_list where task_template_id in('10000') and data_index in('1','2','3','0') and file_status in('21','20','0','1','31','40','41','50','51') and file_name='S0400220190813240000598989609'";
+//        String sql = "select task_template_id from fjbi_busdatacollect_list where b=1";
         ResultSet rs = redisStatement.executeQuery(sql);
         ResultSetMetaData rsMeta = rs.getMetaData();
         while (rs.next()) {
@@ -94,14 +95,17 @@ public class RedisStatementTest {
     public void update() throws Exception {
         StringBuilder sb = new StringBuilder();
         sb.append("update fjbi_busdatacollect_list ")
-                .append("set file_status=1 ,file_status_updateTime=sysdate ")
+//                .append("set file_status=1 ,file_status_updateTime=sysdate ")
 //                .append("set file_status=1 ")
+//                .append("set ")
+                .append("set source_path= ")
                 .append(" where task_template_id=")
                 .append(task_template_id)
                 .append(" and data_index = ")
                 .append(data_index)
-                .append(" and file_status=1 ")
-                .append(" and file_name='S0400220190813240000598989611'");
+                .append(" and file_status = 0 ")
+                .append(" and file_name='S0400220190813240000598989611'")
+        ;
         int ret = redisStatement.executeUpdate(sb.toString());
         logger.info("ret：{}", ret);
     }
