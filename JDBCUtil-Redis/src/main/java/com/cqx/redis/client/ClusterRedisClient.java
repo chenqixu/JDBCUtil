@@ -3,14 +3,16 @@ package com.cqx.redis.client;
 import redis.clients.jedis.*;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class ClusterRedisClient implements RedisClient {
     private JedisPoolConfig config;
     private JedisCluster cluster = null;
     private Set<HostAndPort> HostAndPort_set = new HashSet<HostAndPort>();
+//    private boolean autoCommit = true;// 默认不开事务
+//    private List<Object> transactionResult;// 事务执行结果
+//    private Transaction transaction;// 事务
+//    private boolean isTransactionCommit = false;// 事务是否提交
 
     public ClusterRedisClient(RedisFactory.Builder builder) {
         config = new JedisPoolConfig();
@@ -35,16 +37,6 @@ public class ClusterRedisClient implements RedisClient {
     }
 
     @Override
-    public ScanResult<Map.Entry<String, String>> hscan(String key, String cursor) {
-        return cluster.hscan(key, cursor);
-    }
-
-    @Override
-    public ScanResult<Map.Entry<String, String>> hscan(String key, String cursor, ScanParams params) {
-        return cluster.hscan(key, cursor, params);
-    }
-
-    @Override
     public String set(String key, String value) {
         return cluster.set(key, value);
     }
@@ -57,11 +49,6 @@ public class ClusterRedisClient implements RedisClient {
     @Override
     public boolean setnx(String key, String value, Integer seconds) {
         return false;
-    }
-
-    @Override
-    public String get(String key) {
-        return cluster.get(key);
     }
 
     @Override
@@ -85,6 +72,11 @@ public class ClusterRedisClient implements RedisClient {
     }
 
     @Override
+    public String get(String key) {
+        return cluster.get(key);
+    }
+
+    @Override
     public String hget(String key, String field) {
         return cluster.hget(key, field);
     }
@@ -95,11 +87,55 @@ public class ClusterRedisClient implements RedisClient {
     }
 
     @Override
+    public ScanResult<Map.Entry<String, String>> hscan(String key, String cursor) {
+        return cluster.hscan(key, cursor);
+    }
+
+    @Override
+    public ScanResult<Map.Entry<String, String>> hscan(String key, String cursor, ScanParams params) {
+        return cluster.hscan(key, cursor, params);
+    }
+
+    @Override
     public void close() {
         try {
             cluster.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * 开启事务
+     */
+    @Override
+    public void startTransaction() {
+        // TODO: 2019/12/16  redis集群不支持事务
+    }
+
+    /**
+     * 提交事务
+     */
+    @Override
+    public void commit() {
+        // TODO: 2019/12/16  redis集群不支持事务
+    }
+
+    /**
+     * 回滚事务
+     */
+    @Override
+    public void rollback() {
+        // TODO: 2019/12/16  redis集群不支持事务
+    }
+
+    /**
+     * 获取上一次事务的返回值，并清空
+     *
+     * @return
+     */
+    @Override
+    public List<Object> getTransactionResult() {
+        return new ArrayList<>();
     }
 }

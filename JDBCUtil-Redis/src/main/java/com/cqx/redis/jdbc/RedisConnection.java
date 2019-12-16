@@ -16,6 +16,7 @@ import java.util.concurrent.Executor;
 public class RedisConnection implements java.sql.Connection {
 
     private RedisClient rc;
+    private boolean autoCommit = true;// 默认不开事务
 
     public RedisConnection(String ip_ports) {
         //判断能否使用,进行切割，无法切割就进入单机模式
@@ -63,12 +64,19 @@ public class RedisConnection implements java.sql.Connection {
 
     @Override
     public void setAutoCommit(boolean autoCommit) throws SQLException {
-
+        this.autoCommit = autoCommit;
+        // 开启事务
+        if (!this.autoCommit && rc != null) {
+            rc.startTransaction();
+        }
     }
 
     @Override
     public void commit() throws SQLException {
-
+        // 在有开启事务的情况下才执行提交
+        if (!this.autoCommit && rc != null) {
+            rc.commit();
+        }
     }
 
     @Override

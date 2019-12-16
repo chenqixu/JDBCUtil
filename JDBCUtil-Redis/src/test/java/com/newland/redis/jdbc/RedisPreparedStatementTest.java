@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Arrays;
 
@@ -33,7 +34,7 @@ public class RedisPreparedStatementTest {
     }
 
     @After
-    public void after() {
+    public void after() throws SQLException {
         redisClient.close();
     }
 
