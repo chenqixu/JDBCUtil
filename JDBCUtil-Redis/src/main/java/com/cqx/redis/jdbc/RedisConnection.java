@@ -59,7 +59,7 @@ public class RedisConnection implements java.sql.Connection {
 
     @Override
     public boolean getAutoCommit() throws SQLException {
-        return false;
+        return autoCommit;
     }
 
     @Override
@@ -81,7 +81,10 @@ public class RedisConnection implements java.sql.Connection {
 
     @Override
     public void rollback() throws SQLException {
-
+        // 在有开启事务的情况下才执行回滚
+        if (!this.autoCommit && rc != null) {
+            rc.rollback();
+        }
     }
 
     @Override
