@@ -10,6 +10,7 @@
     <modules>
         <module>JDBCUtil-Cli</module>
         <module>JDBCUtil-Redis</module>
+        <module>JDBCUtil-MyDB</module>
     </modules>
     <packaging>pom</packaging>
 
